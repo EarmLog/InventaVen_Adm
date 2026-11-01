@@ -69,13 +69,15 @@ export default function PaginaLoginAdmin() {
 
         <Campo etiqueta="Correo del administrador" requerido>
           <div className="relative">
-            <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--texto-tenue)]" />
+            {!correo ? (
+              <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--texto-tenue)]" />
+            ) : null}
             <Entrada
               type="email"
               value={correo}
               onChange={(evento) => setCorreo(evento.target.value)}
               placeholder="admin@inventaven.com"
-              className="pl-9"
+              className={correo ? "pl-3" : "pl-10"}
               autoComplete="email"
               required
             />
@@ -84,13 +86,15 @@ export default function PaginaLoginAdmin() {
 
         <Campo etiqueta="Contraseña" requerido>
           <div className="relative">
-            <LockKeyhole className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--texto-tenue)]" />
+            {!contrasena ? (
+              <LockKeyhole className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--texto-tenue)]" />
+            ) : null}
             <Entrada
               type={verClave ? "text" : "password"}
               value={contrasena}
               onChange={(evento) => setContrasena(evento.target.value)}
               placeholder="Tu contraseña"
-              className="pl-9 pr-10"
+              className={contrasena ? "pl-3 pr-10" : "pl-10 pr-10"}
               autoComplete="current-password"
               required
             />

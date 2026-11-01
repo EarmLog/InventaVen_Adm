@@ -8,6 +8,7 @@ import Boton from "@/components/ui/Boton";
 import Campo from "@/components/ui/Campo";
 import Entrada from "@/components/ui/Entrada";
 import Alerta from "@/components/ui/Alerta";
+import Modal from "@/components/ui/Modal";
 import Captcha from "@/components/modules/auth/Captcha";
 import { useSesion } from "@/context/SesionContext";
 
@@ -21,25 +22,19 @@ export default function PaginaLoginAdmin() {
   const [error, setError] = useState("");
   const [captchaTicket, setCaptchaTicket] = useState("");
   const [versionCaptcha, setVersionCaptcha] = useState(0);
+  const [mostrarModalCaptcha, setMostrarModalCaptcha] = useState(false);
 
   useEffect(() => {
     if (sesion) router.replace("/panel");
   }, [sesion, router]);
 
-  async function enviar(evento) {
-    evento.preventDefault();
-    setError("");
-    if (!correo.trim() || !contrasena) {
-      setError("Ingresa tu correo y contraseña.");
-      return;
-    }
-    if (!captchaTicket) {
-      setError("Completa la verificación de seguridad para continuar.");
-      return;
-    }
+  async function realizarLogin(ticketUsar) {
+    const ticket = ticketUsar || captchaTicket;
+    if (!ticket) return;
     setCargando(true);
+    setError("");
     try {
-      await iniciarSesion({ correo, contrasena, captcha: captchaTicket });
+      await iniciarSesion({ correo, contrasena, captcha: ticket });
       toast.success("Acceso administrativo concedido.");
       router.replace("/panel");
     } catch (err) {
@@ -49,6 +44,20 @@ export default function PaginaLoginAdmin() {
     } finally {
       setCargando(false);
     }
+  }
+
+  async function enviar(evento) {
+    evento.preventDefault();
+    setError("");
+    if (!correo.trim() || !contrasena) {
+      setError("Ingresa tu correo y contraseña.");
+      return;
+    }
+    if (!captchaTicket) {
+      setMostrarModalCaptcha(true);
+      return;
+    }
+    await realizarLogin(captchaTicket);
   }
 
   return (
@@ -109,17 +118,31 @@ export default function PaginaLoginAdmin() {
           </div>
         </Campo>
 
-        <Captcha
-          key={versionCaptcha}
-          onTicket={setCaptchaTicket}
-          disabled={cargando}
-        />
-
         <Boton type="submit" cargando={cargando} className="w-full" tamano="lg">
           Entrar a la consola
           <ArrowRight className="h-4 w-4" />
         </Boton>
       </form>
+
+      <Modal
+        abierto={mostrarModalCaptcha}
+        onCerrar={() => setMostrarModalCaptcha(false)}
+        titulo="Verificación de seguridad"
+        descripcion="Resuelve la verificación para continuar con tu acceso administrativo."
+        ancho="sm"
+      >
+        <Captcha
+          key={versionCaptcha}
+          onTicket={async (ticket) => {
+            if (ticket) {
+              setCaptchaTicket(ticket);
+              setMostrarModalCaptcha(false);
+              await realizarLogin(ticket);
+            }
+          }}
+          disabled={cargando}
+        />
+      </Modal>
 
       <p className="mt-8 text-center text-[11px] leading-relaxed text-[var(--texto-tenue)]">
         Los inicios de sesión no autorizados son rechazados automáticamente.

@@ -130,6 +130,23 @@ export function ProveedorSesion({ children }) {
     setErrorAcceso("");
   }, []);
 
+  const recuperarClave = useCallback(async (correo) => {
+    const supabase = obtenerClienteSupabase();
+    const { error } = await supabase.auth.resetPasswordForEmail(
+      correo.trim().toLowerCase(),
+      {
+        redirectTo: `${window.location.origin}/actualizar-clave`,
+      }
+    );
+    if (error) throw new Error(traducirErrorAuth(error));
+  }, []);
+
+  const cambiarClave = useCallback(async (nuevaClave) => {
+    const supabase = obtenerClienteSupabase();
+    const { error } = await supabase.auth.updateUser({ password: nuevaClave });
+    if (error) throw new Error(traducirErrorAuth(error));
+  }, []);
+
   const refrescarPerfil = useCallback(async () => {
     const { data } = await obtenerClienteSupabase().auth.getSession();
     if (data.session) return cargarPerfil(data.session);
@@ -146,6 +163,8 @@ export function ProveedorSesion({ children }) {
         esAdmin: perfil?.rol === "administrador",
         iniciarSesion,
         cerrarSesion,
+        recuperarClave,
+        cambiarClave,
         refrescarPerfil,
       }}
     >

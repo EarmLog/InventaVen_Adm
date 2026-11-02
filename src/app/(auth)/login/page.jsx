@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Eye, EyeOff, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
@@ -39,6 +40,7 @@ export default function PaginaLoginAdmin() {
       router.replace("/panel");
     } catch (err) {
       setError(err.message);
+      setContrasena("");
       setCaptchaTicket("");
       setVersionCaptcha((valor) => valor + 1);
     } finally {
@@ -83,6 +85,9 @@ export default function PaginaLoginAdmin() {
             onChange={(evento) => setCorreo(evento.target.value)}
             placeholder="admin@inventaven.com"
             autoComplete="email"
+            autoCapitalize="none"
+            spellCheck={false}
+            maxLength={254}
             required
           />
         </Campo>
@@ -96,6 +101,7 @@ export default function PaginaLoginAdmin() {
               placeholder="Tu contraseña"
               className="pr-10"
               autoComplete="current-password"
+              maxLength={200}
               required
             />
             <button
@@ -108,6 +114,15 @@ export default function PaginaLoginAdmin() {
             </button>
           </div>
         </Campo>
+
+        <div className="flex items-center justify-end">
+          <Link
+            href="/recuperar"
+            className="text-xs font-semibold text-[var(--primario)] hover:underline"
+          >
+            ¿Olvidaste tu contraseña?
+          </Link>
+        </div>
 
         <Boton type="submit" cargando={cargando} className="w-full" tamano="lg">
           Entrar a la consola

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Eye, EyeOff, LockKeyhole, Mail, ShieldCheck } from "lucide-react";
+import { ArrowRight, Eye, EyeOff, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import Boton from "@/components/ui/Boton";
 import Campo from "@/components/ui/Campo";
@@ -77,33 +77,24 @@ export default function PaginaLoginAdmin() {
         {error ? <Alerta tipo="error">{error}</Alerta> : null}
 
         <Campo etiqueta="Correo del administrador" requerido>
-          <div className="relative">
-            {!correo ? (
-              <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--texto-tenue)]" />
-            ) : null}
-            <Entrada
-              type="email"
-              value={correo}
-              onChange={(evento) => setCorreo(evento.target.value)}
-              placeholder="admin@inventaven.com"
-              className={correo ? "pl-3" : "pl-10"}
-              autoComplete="email"
-              required
-            />
-          </div>
+          <Entrada
+            type="email"
+            value={correo}
+            onChange={(evento) => setCorreo(evento.target.value)}
+            placeholder="admin@inventaven.com"
+            autoComplete="email"
+            required
+          />
         </Campo>
 
         <Campo etiqueta="Contraseña" requerido>
           <div className="relative">
-            {!contrasena ? (
-              <LockKeyhole className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--texto-tenue)]" />
-            ) : null}
             <Entrada
               type={verClave ? "text" : "password"}
               value={contrasena}
               onChange={(evento) => setContrasena(evento.target.value)}
               placeholder="Tu contraseña"
-              className={contrasena ? "pl-3 pr-10" : "pl-10 pr-10"}
+              className="pr-10"
               autoComplete="current-password"
               required
             />

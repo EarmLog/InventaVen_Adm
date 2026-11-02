@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { consumirTicket } from "@/lib/captcha";
 import { traducirErrorAuth } from "@/lib/api/auth";
+import { crearClienteServidor } from "@/lib/supabase/servidor";
 import {
   claveIp,
   limitar,
@@ -83,6 +84,28 @@ export async function POST(request) {
       return NextResponse.json(
         { error: traducirErrorAuth(error) },
         { status: 401 }
+      );
+    }
+
+    const servidor = crearClienteServidor();
+    const { data: perfil, error: errorPerfil } = await servidor
+      .from("perfiles")
+      .select("rol, correo")
+      .eq("id", data.user.id)
+      .maybeSingle();
+    if (errorPerfil) throw errorPerfil;
+
+    const correoAdmin = String(process.env.ADMIN_EMAIL || "").toLowerCase();
+    const esAdmin =
+      perfil?.rol === "administrador" ||
+      (correoAdmin &&
+        String(perfil?.correo || data.user.email).toLowerCase() === correoAdmin);
+
+    if (!perfil || !esAdmin) {
+      await cliente.auth.signOut().catch(() => {});
+      return NextResponse.json(
+        { error: "Esta cuenta no tiene permisos de administración." },
+        { status: 403 }
       );
     }
 

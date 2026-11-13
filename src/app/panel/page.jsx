@@ -7,9 +7,11 @@ import {
   KeyRound,
   RefreshCw,
   Search,
+  Shield,
   ShieldCheck,
   ShieldX,
   UserCheck,
+  UserPlus,
   Users,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -20,8 +22,11 @@ import Selector from "@/components/ui/Selector";
 import Etiqueta from "@/components/ui/Etiqueta";
 import EstadoVacio from "@/components/ui/EstadoVacio";
 import ModalLicencia from "@/components/modules/admin/ModalLicencia";
+import ModalCrearUsuario from "@/components/modules/admin/ModalCrearUsuario";
+import ModalSeguridadUsuario from "@/components/modules/admin/ModalSeguridadUsuario";
 import { listarUsuariosAdmin } from "@/lib/api/admin";
 import { formatearFecha, formatearNumero } from "@/lib/utilidades/formato";
+import { etiquetaTipoCuenta } from "@/lib/utilidades/constantes";
 
 function Indicador({ Icono, etiqueta, valor, detalle, tono = "verde" }) {
   const tonos = {
@@ -64,6 +69,8 @@ export default function PaginaPanelAdmin() {
   const [busqueda, setBusqueda] = useState("");
   const [filtro, setFiltro] = useState("todos");
   const [seleccionado, setSeleccionado] = useState(null);
+  const [seguridad, setSeguridad] = useState(null);
+  const [creando, setCreando] = useState(false);
 
   const cargar = useCallback(async (silencioso = false) => {
     if (!silencioso) setCargando(true);
@@ -115,6 +122,22 @@ export default function PaginaPanelAdmin() {
     setSeleccionado(null);
   }
 
+  function usuarioCreado(nuevoUsuario) {
+    setUsuarios((anterior) => {
+      const existe = anterior.some((usuario) => usuario.id === nuevoUsuario.id);
+      return existe
+        ? anterior.map((usuario) =>
+            usuario.id === nuevoUsuario.id ? nuevoUsuario : usuario
+          )
+        : [nuevoUsuario, ...anterior];
+    });
+  }
+
+  function usuarioEliminado(id) {
+    setUsuarios((anterior) => anterior.filter((usuario) => usuario.id !== id));
+    setSeguridad(null);
+  }
+
   async function refrescar() {
     await cargar(true);
     toast.success("Lista de usuarios actualizada.");
@@ -129,10 +152,16 @@ export default function PaginaPanelAdmin() {
             Administra el vencimiento de cada negocio registrado en InventaVen.
           </p>
         </div>
-        <Boton variante="secundario" onClick={refrescar} cargando={cargando}>
-          <RefreshCw className="h-4 w-4" />
-          Actualizar
-        </Boton>
+        <div className="flex flex-wrap gap-2">
+          <Boton onClick={() => setCreando(true)}>
+            <UserPlus className="h-4 w-4" />
+            Crear usuario
+          </Boton>
+          <Boton variante="secundario" onClick={refrescar} cargando={cargando}>
+            <RefreshCw className="h-4 w-4" />
+            Actualizar
+          </Boton>
+        </div>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -255,6 +284,10 @@ export default function PaginaPanelAdmin() {
                               <p className="max-w-[220px] truncate text-[10px] text-[var(--texto-suave)]">
                                 {usuario.correo}
                               </p>
+                              <p className="max-w-[220px] truncate text-[10px] text-[var(--texto-tenue)]">
+                                {etiquetaTipoCuenta(usuario.tipoCuenta)}
+                                {usuario.rif ? ` · ${usuario.rif}` : ""}
+                              </p>
                               {usuario.telefono ? (
                                 <p className="text-[10px] text-[var(--texto-tenue)]">
                                   {usuario.telefono}
@@ -297,14 +330,22 @@ export default function PaginaPanelAdmin() {
                             : "Nunca"}
                         </td>
                         <td>
-                          <div className="flex justify-end">
+                          <div className="flex justify-end gap-1.5">
                             <Boton
                               variante="secundario"
                               tamano="sm"
                               onClick={() => setSeleccionado(usuario)}
                             >
                               <KeyRound className="h-3.5 w-3.5" />
-                              Gestionar
+                              Licencia
+                            </Boton>
+                            <Boton
+                              variante="secundario"
+                              tamano="sm"
+                              onClick={() => setSeguridad(usuario)}
+                            >
+                              <Shield className="h-3.5 w-3.5" />
+                              Seguridad
                             </Boton>
                           </div>
                         </td>
@@ -335,6 +376,10 @@ export default function PaginaPanelAdmin() {
                         <p className="truncate text-[10px] text-[var(--texto-suave)]">
                           {usuario.correo}
                         </p>
+                        <p className="truncate text-[10px] text-[var(--texto-tenue)]">
+                          {etiquetaTipoCuenta(usuario.tipoCuenta)}
+                          {usuario.rif ? ` · ${usuario.rif}` : ""}
+                        </p>
                       </div>
                     </div>
                     <Etiqueta variante={estado.variante}>{estado.etiqueta}</Etiqueta>
@@ -357,21 +402,31 @@ export default function PaginaPanelAdmin() {
                     </div>
                   </div>
 
-                  <div className="mt-2 flex items-center justify-between gap-2">
+                  <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
                     <span className="flex items-center gap-1 text-[10px] text-[var(--texto-tenue)]">
                       <CalendarClock className="h-3.5 w-3.5" />
                       {usuario.ultimoAcceso
                         ? formatearFecha(usuario.ultimoAcceso)
                         : "Sin acceso"}
                     </span>
-                    <Boton
-                      variante="exitoSuave"
-                      tamano="sm"
-                      onClick={() => setSeleccionado(usuario)}
-                    >
-                      <KeyRound className="h-3.5 w-3.5" />
-                      Gestionar
-                    </Boton>
+                    <div className="flex flex-wrap justify-end gap-1.5">
+                      <Boton
+                        variante="exitoSuave"
+                        tamano="sm"
+                        onClick={() => setSeleccionado(usuario)}
+                      >
+                        <KeyRound className="h-3.5 w-3.5" />
+                        Licencia
+                      </Boton>
+                      <Boton
+                        variante="secundario"
+                        tamano="sm"
+                        onClick={() => setSeguridad(usuario)}
+                      >
+                        <Shield className="h-3.5 w-3.5" />
+                        Seguridad
+                      </Boton>
+                    </div>
                   </div>
                 </Tarjeta>
               );
@@ -391,6 +446,19 @@ export default function PaginaPanelAdmin() {
         usuario={seleccionado}
         onCerrar={() => setSeleccionado(null)}
         onActualizado={actualizado}
+      />
+
+      <ModalCrearUsuario
+        abierto={creando}
+        onCerrar={() => setCreando(false)}
+        onCreado={usuarioCreado}
+      />
+
+      <ModalSeguridadUsuario
+        abierto={Boolean(seguridad)}
+        usuario={seguridad}
+        onCerrar={() => setSeguridad(null)}
+        onEliminado={usuarioEliminado}
       />
     </div>
   );

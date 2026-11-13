@@ -37,3 +37,24 @@ export async function actualizarLicenciaAdmin(payload) {
   });
   return datos.usuario;
 }
+
+export async function crearUsuarioAdmin(payload) {
+  return solicitar("/api/admin/usuarios", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function restablecerClaveAdmin(payload) {
+  return solicitar("/api/admin/usuarios", {
+    method: "PATCH",
+    body: JSON.stringify({ ...payload, accion: "restablecerClave" }),
+  });
+}
+
+export async function eliminarUsuarioAdmin(id) {
+  return solicitar("/api/admin/usuarios", {
+    method: "DELETE",
+    body: JSON.stringify({ id }),
+  });
+}

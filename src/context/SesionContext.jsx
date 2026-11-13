@@ -16,21 +16,27 @@ const SesionContext = createContext(null);
 export function ProveedorSesion({ children }) {
   const [sesion, setSesion] = useState(undefined);
   const [perfil, setPerfil] = useState(null);
-  const [cargandoPerfil, setCargandoPerfil] = useState(false);
+  const [cargandoPerfil, setCargandoPerfil] = useState(true);
   const [errorAcceso, setErrorAcceso] = useState("");
   const montado = useRef(true);
   const perfilEnCurso = useRef(false);
+  const perfilRef = useRef(null);
 
   const cargarPerfil = useCallback(async (sesionActual) => {
     if (!sesionActual?.access_token) {
-      if (montado.current) setPerfil(null);
+      perfilRef.current = null;
+      if (montado.current) {
+        setPerfil(null);
+        setCargandoPerfil(false);
+      }
       return null;
     }
     if (perfilEnCurso.current) return null;
     perfilEnCurso.current = true;
-    if (montado.current) setCargandoPerfil(true);
+    if (montado.current && !perfilRef.current) setCargandoPerfil(true);
     try {
       const datos = await solicitarPerfilAdmin(sesionActual.access_token);
+      perfilRef.current = datos;
       if (montado.current) {
         setPerfil(datos);
         setErrorAcceso("");
@@ -61,10 +67,20 @@ export function ProveedorSesion({ children }) {
       .then(({ data }) => {
         if (!montado.current) return;
         setSesion(data.session ?? null);
-        if (data.session) cargarPerfil(data.session);
+        if (data.session) {
+          cargarPerfil(data.session);
+        } else {
+          perfilRef.current = null;
+          setPerfil(null);
+          setCargandoPerfil(false);
+        }
       })
       .catch(() => {
-        if (montado.current) setSesion(null);
+        if (!montado.current) return;
+        perfilRef.current = null;
+        setSesion(null);
+        setPerfil(null);
+        setCargandoPerfil(false);
       });
 
     const { data: escucha } = supabase.auth.onAuthStateChange((evento, nuevaSesion) => {
@@ -73,7 +89,9 @@ export function ProveedorSesion({ children }) {
       if (nuevaSesion) {
         if (evento !== "TOKEN_REFRESHED") cargarPerfil(nuevaSesion);
       } else {
+        perfilRef.current = null;
         setPerfil(null);
+        setCargandoPerfil(false);
       }
     });
 
@@ -115,6 +133,7 @@ export function ProveedorSesion({ children }) {
 
     try {
       const perfilAdmin = await solicitarPerfilAdmin(datos.sesion.access_token);
+      perfilRef.current = perfilAdmin;
       setPerfil(perfilAdmin);
       return perfilAdmin;
     } catch (errorPerfil) {
@@ -125,9 +144,11 @@ export function ProveedorSesion({ children }) {
 
   const cerrarSesion = useCallback(async () => {
     await obtenerClienteSupabase().auth.signOut();
+    perfilRef.current = null;
     setPerfil(null);
     setSesion(null);
     setErrorAcceso("");
+    setCargandoPerfil(false);
   }, []);
 
   const recuperarClave = useCallback(async (correo) => {
